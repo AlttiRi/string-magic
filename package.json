@@ -1,0 +1,21 @@
+{
+  "name": "string-magic",
+  "version": "0.0.0",
+  "main": "index.js",
+  "type": "module",
+  "keywords": ["string", "util", "url", "title", "hostname", "cleaner"],
+  "author": "gh.alttiri",
+  "license": "MIT",
+  "description": "",
+  "scripts": {
+
+  },
+  "dependencies": {
+    "@alttiri/util-js": "1.10.2-20240603",
+    "@alttiri/util-node-js": "2.1.0-20240624"
+  },
+  "devDependencies": {
+    "@types/node": "20.12.12",
+    "typescript": "5.5.2"
+  }
+}
