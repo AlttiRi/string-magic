@@ -37,7 +37,7 @@ const rules_1: UCRuleStrings = [
       "atob",
       "recursive",
     "site:t.umblr.com",
-      "filter-start:https://t.umblr.com/redirect",  // "filter-start:", to only check the url, with no trimming
+      "filter-start:https://t.umblr.com/redirect", // "filter-start:", to only check the url, with no trimming
       "search-param:z",
       "recursive",
 
@@ -194,6 +194,10 @@ tt({
     expect: "https://subscribestar.com/",
 });
 tt({
+    input:  "https://subscribestar.com/away",
+    expect: "https://subscribestar.com/away",
+});
+tt({
     input:  "https://subscribestar.com/away?url=aHR0cDovL2V4YW1wbGUuY29tLw==",
     expect: "https://example.com/",
 });
@@ -202,15 +206,18 @@ tt({
     expect: "https://example.com/",
 });
 
+// "trim-search-params:feature"
 tt({
     input:  "http://www.youtube.com/watch?feature=player_embedded&v=acWknWsvc-s",
     expect: "http://www.youtube.com/watch?v=acWknWsvc-s",
 });
+// "trim-search-params:feature", "trim-search-params:t"
 tt({
-    input:  "http://www.youtube.com/watch?feature=player_embedded&v=acWknWsvc-s&t=12",
-    expect: "http://www.youtube.com/watch?v=acWknWsvc-s",
+    input:  "http://www.youtube.com/watch?feature=player_embedded&v=t0VjK-IH2z4&t=12",
+    expect: "http://www.youtube.com/watch?v=t0VjK-IH2z4",
 });
 
+// "trim-start:..."
 tt({
     input:  "https://anonym.es/?https://example.com/",
     expect: "https://example.com/",
@@ -220,6 +227,7 @@ tt({
     expect: "https://example.com/",
 });
 
+// "filter-start:https://web.archive.org/web/", "trim-regex:(?<trim_prefix>^.+web\\/\\d+\\/)"
 tt({
     input:  "https://web.archive.org/web/20240624135623/https://example.com/",
     expect: "https://example.com/",
