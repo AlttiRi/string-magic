@@ -28,11 +28,13 @@ export type UCRuleString = UCRuleCommandString | UCRuleDataCommandString;
 export type UCRuleStrings = UCRuleString[];
 type UCRule = {
     command: UCCommandString
-} | {
+};
+type UCDataRule = {
     command: UCDataCommandString
     data: string
 };
-export type UCRuleRecords = Record<string, Array<UCRule>>;
+type UCAnyRule = UCRule | UCDataRule;
+export type UCRuleRecords = Record<string, Array<UCAnyRule>>;
 export type UCCompiledRules = {
     ruleRecords:   UCRuleRecords
     ruleRecordsWC: UCRuleRecords | null
@@ -80,7 +82,7 @@ export class UrlCleaner {
                 continue;
             }
 
-            const rule: UCRule | null = this.parseRuleString(rule_str);
+            const rule: UCAnyRule | null = this.parseRuleString(rule_str);
             if (!rule) {
                 console.log(`[Wrong rule string] "${rule_str}"`); // todo
                 continue;
@@ -107,16 +109,16 @@ export class UrlCleaner {
         return {ruleRecords, ruleRecordsWC};
     }
 
-    private getRules(url: string): UCRule[] | null {
+    private getRules(url: string): UCAnyRule[] | null {
         const hostname = getHostname(url);
-        const siteRules: UCRule[] | undefined = this.ruleRecords[noWWW(hostname)];
+        const siteRules: UCAnyRule[] | undefined = this.ruleRecords[noWWW(hostname)];
         if (siteRules) {
             return siteRules;
         }
         if (this.ruleRecordsWC !== null) {
             const hosts = getParentSubHosts(hostname);
             for (const host of hosts) {
-                const siteRules: UCRule[] | undefined = this.ruleRecordsWC[host];
+                const siteRules: UCAnyRule[] | undefined = this.ruleRecordsWC[host];
                 if (siteRules) {
                     return siteRules;
                 }
@@ -126,93 +128,14 @@ export class UrlCleaner {
     }
 
     clean(url: string): string {
-        const rules: UCRule[] | null = this.getRules(url);
+        const rules: UCAnyRule[] | null = this.getRules(url);
         if (!rules) {
             return url;
         }
-        return this.applyRules(url, rules);
+        return new RuleApplier(this, url, rules).applyRules();
     }
 
-    private applyRules(url: string, rules: UCRule[]): string {
-        let newUrl = url;
-        for (const rule of rules) {
-            if (rule.command === "trim-start") {
-                if (newUrl.startsWith(rule.data)) {
-                    newUrl = newUrl.replace(rule.data, "");
-                    continue;
-                }
-                break;
-            }
-            if (rule.command === "filter-start") {
-                if (newUrl.startsWith(rule.data)) {
-                    continue;
-                }
-                break;
-            }
-            if (rule.command === "trim-regex") {
-                const regex = new RegExp(rule.data);
-                const match = regex.exec(newUrl);
-                if (match?.groups) {
-                    Object.entries(match.groups).forEach(([k, v]) => {
-                        if (k.startsWith("trim")) {
-                            newUrl = newUrl.replace(v, "");
-                        }
-                    });
-                }
-                continue;
-            }
-            if (rule.command === "decode-url") {
-                newUrl = decodeURIComponent(newUrl)
-                    .replaceAll(/\s+/g, "");
-                continue;
-            }
-            if (rule.command === "trim-search-params") {
-                const u = new URL(newUrl);
-                u.searchParams.delete(rule.data);
-                newUrl = u.toString();
-                continue;
-            }
-            if (rule.command === "atob") {
-                try {
-                    newUrl = atob(newUrl);
-                } catch (e) {
-                    console.log(newUrl);
-                    console.error(e);
-                    return url;
-                }
-                continue;
-            }
-            if (rule.command === "search-param") {
-                const u = new URL(newUrl);
-                const spUrl = u.searchParams.get(rule.data);
-                if (spUrl === null) {
-                    return url;
-                }
-                newUrl = spUrl;
-                continue;
-            }
-            if (rule.command === "https") {
-                if (newUrl.startsWith("http://")) {
-                    newUrl = newUrl.replace("http://", "https://");
-                }
-                continue;
-            }
-            if (rule.command === "prepend") {
-                newUrl = rule.data + newUrl;
-                continue;
-            }
-
-            if (rule.command === "recursive") {
-                if (newUrl !== url) {
-                    // return this.applyRules(newUrl, rules);
-                    return this.clean(newUrl); // for a case when the url will have a new hostname
-                }
-            }
-        }
-        return newUrl;
-    }
-
-    private static parseRuleString(rule_str: string): UCRule | null {
+    private static parseRuleString(rule_str: string): UCAnyRule | null {
         if (isCommand(rule_str)) {
             return {
                 command: rule_str,
@@ -233,4 +156,109 @@ export class UrlCleaner {
     }
 }
 
+type IRuleApplier =
+      Record<UCDataCommandString, (rule: UCDataRule) => void>
+    & Record<    UCCommandString, (rule: UCRule)     => void>
+    & {
+        nextRule:   () => void
+        applyRules: (cleaner: UrlCleaner, url: string, rules: UCAnyRule[]) => string
+    };
 
+class RuleApplier implements IRuleApplier {
+    private readonly cleaner: UrlCleaner;
+    private readonly rules:   UCAnyRule[];
+    private readonly initUrl: string;
+    private url:     string;
+    private index:   number = -1;
+    constructor(cleaner: UrlCleaner, url: string, rules: UCAnyRule[]) {
+        this.cleaner = cleaner;
+        this.initUrl = url;
+        this.url     = url;
+        this.rules   = rules;
+    }
+    applyRules(): string {
+        this.nextRule();
+        return this.url;
+    }
+    nextRule() {
+        this.index++;
+        const next = this.rules[this.index];
+        if (next) {
+            // @ts-ignore
+            // TS2345: Argument of type UCAnyRule is not assignable to parameter of type never
+            // The intersection UCDataRule & UCRule was reduced to never because property command has conflicting types in some constituents.
+            // Type UCDataRule is not assignable to type never
+            this[next.command](next);
+        }
+    }
+
+    // --- Filters --- //
+    ["filter-start"](rule: UCDataRule) {
+        if (this.url.startsWith(rule.data)) {
+            this.nextRule();
+        }
+    }
+    ["trim-start"](rule: UCDataRule) {
+        if (this.url.startsWith(rule.data)) {
+            this.url = this.url.replace(rule.data, "");
+            this.nextRule();
+        }
+    }
+
+    ["trim-regex"](rule: UCDataRule) {
+        const regex = new RegExp(rule.data);
+        const match = regex.exec(this.url);
+        if (match?.groups) {
+            Object.entries(match.groups).forEach(([k, v]) => {
+                if (k.startsWith("trim")) {
+                    this.url = this.url.replace(v, "");
+                }
+            });
+        }
+        this.nextRule();
+    }
+    ["trim-search-params"](rule: UCDataRule) {
+        const u = new URL(this.url);
+        u.searchParams.delete(rule.data);
+        this.url = u.toString();
+        this.nextRule();
+    }
+    ["search-param"](rule: UCDataRule) {
+        const u = new URL(this.url);
+        const spUrl = u.searchParams.get(rule.data);
+        if (spUrl !== null) {
+            this.url = spUrl;
+            this.nextRule();
+        }
+    }
+    ["prepend"](rule: UCDataRule) {
+        this.url = rule.data + this.url;
+        this.nextRule();
+    }
+
+    ["https"]() {
+        if (this.url.startsWith("http://")) {
+            this.url = this.url.replace("http://", "https://");
+        }
+        this.nextRule();
+    }
+    ["decode-url"]() {
+        this.url = decodeURIComponent(this.url)
+            .replaceAll(/\s+/g, "");
+        this.nextRule();
+    }
+    ["atob"]() {
+        try {
+            this.url = atob(this.url);
+            this.nextRule();
+        } catch (e) {
+            console.log(this.url);
+            console.error(e);
+        }
+    }
+    ["recursive"]() {
+        if (this.url !== this.initUrl) {
+            this.url = this.cleaner.clean(this.url); // for a case when the url will have a new hostname
+        }
+    }
+}
