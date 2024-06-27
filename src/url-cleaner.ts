@@ -10,6 +10,7 @@ const TypeArray_UCRuleDataCommands = [
     "trim-start",         "trim-regex",
     "search-param",       "prepend",
     "trim-search-params", "filter-start",
+    "trim-search-param",
 ] as const;
 type  UCDataCommandString = typeof TypeArray_UCRuleDataCommands[number];
 
@@ -218,6 +219,15 @@ class RuleApplier implements IRuleApplier {
         this.nextRule();
     }
     ["trim-search-params"](rule: UCDataRule) {
+        const u = new URL(this.url);
+        const params = rule.data.split(/\s+/);
+        for (const param of params) {
+            u.searchParams.delete(param);
+        }
+        this.url = u.toString();
+        this.nextRule();
+    }
+    ["trim-search-param"](rule: UCDataRule) {
         const u = new URL(this.url);
         u.searchParams.delete(rule.data);
         this.url = u.toString();

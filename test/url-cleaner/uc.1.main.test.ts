@@ -41,10 +41,17 @@ const rules_1: UCRuleStrings = [
       "search-param:z",
       "recursive",
 
+    "site:yyy-youtube.com",
+      "trim-search-param:feature",
+      "trim-search-param:t",
+      "trim-search-param:si",
     "site:youtube.com",
       "trim-search-params:feature",
       "trim-search-params:t",
       "trim-search-params:si",
+    "site:xxx-youtube.com",
+      "trim-search-params:feature t si",
+
     "site:anonym.es",
       "trim-start:https://anonym.es/?",
     "site:anonym.to",
@@ -216,6 +223,16 @@ tt({
     input:  "http://www.youtube.com/watch?feature=player_embedded&v=t0VjK-IH2z4&t=12",
     expect: "http://www.youtube.com/watch?v=t0VjK-IH2z4",
 });
+
+tt({
+    input:  "http://www.yyy-youtube.com/watch?feature=player_embedded&v=ogH3fQsdsSo",
+    expect: "http://www.yyy-youtube.com/watch?v=ogH3fQsdsSo",
+});
+tt({
+    input:  "http://www.xxx-youtube.com/watch?feature=player_embedded&v=3gZx03UtX3k",
+    expect: "http://www.xxx-youtube.com/watch?v=3gZx03UtX3k",
+});
+
 
 // "trim-start:..."
 tt({
