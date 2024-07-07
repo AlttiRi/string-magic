@@ -15,6 +15,24 @@ You describe rules as a string array, then apply them on the string is associate
 
 ---
 
+## TitleCleaner
+
+```ts
+const tcRules: TCRuleStrings = [
+    "site:artstation.com",
+      "trim-start:: ArtStation - ",
+    "site:deviantart.com",
+      "trim-end:: on DeviantArt",
+];
+const titleCleaner = TitleCleaner.fromRuleStrings(tcRules);
+
+titleCleaner.clean(
+    "https://www.artstation.com/artwork/o0Yxm",
+    "ArtStation - Overwatch Preorder Widowmaker Noire"
+);
+//  "Overwatch Preorder Widowmaker Noire"
+```
+
 See tests for more examples.
 
 - [TitleCleaner](https://github.com/AlttiRi/string-magic/tree/master/test/title-cleaner)
