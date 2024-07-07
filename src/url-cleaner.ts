@@ -7,24 +7,35 @@ const TypeArray_UCRuleCommands = [
 type  UCCommandString = typeof TypeArray_UCRuleCommands[number];
 
 const TypeArray_UCRuleDataCommands = [
-    "trim-start",         "trim-regex",
-    "search-param",       "prepend",
-    "trim-search-params", "filter-start",
-    "trim-search-param",
+    "filter-start",       "trim-start",
+    "prepend",            "trim-regex",
+    "trim-search-param",  "search-param",
 ] as const;
-type  UCDataCommandString = typeof TypeArray_UCRuleDataCommands[number];
+type  UCDataCommandString  = typeof TypeArray_UCRuleDataCommands[number];
 
-const commands     = new Set(TypeArray_UCRuleCommands)     as Set<string>;
-const dataCommands = new Set(TypeArray_UCRuleDataCommands) as Set<string>;
+const TypeArray_UCRuleMDataCommands = [ // multi value
+    "trim-search-params",
+] as const;
+type  UCMDataCommandString = typeof TypeArray_UCRuleMDataCommands[number];
+
+type  UCAnyDataCommandString = UCDataCommandString | UCMDataCommandString;
+
+
+const commands      = new Set(TypeArray_UCRuleCommands)      as Set<string>;
+const dataCommands  = new Set(TypeArray_UCRuleDataCommands)  as Set<string>;
+const mDataCommands = new Set(TypeArray_UCRuleMDataCommands) as Set<string>;
 function isCommand(str: string): str is UCCommandString {
     return commands.has(str);
 }
 function isDataCommand(str: string): str is UCDataCommandString {
     return dataCommands.has(str);
 }
+function isMultiDataCommand(str: string): str is UCMDataCommandString {
+    return mDataCommands.has(str);
+}
 
 type UCRuleCommandString = UCCommandString;
-type UCRuleDataCommandString = `site:${string}` | `sites:${string}` | `${UCDataCommandString}:${string}`;
+type UCRuleDataCommandString = `site:${string}` | `sites:${string}` | `${UCAnyDataCommandString}:${string}`;
 export type UCRuleString = UCRuleCommandString | UCRuleDataCommandString;
 export type UCRuleStrings = UCRuleString[];
 type UCRule = {
@@ -34,7 +45,12 @@ type UCDataRule = {
     command: UCDataCommandString
     data: string
 };
-type UCAnyRule = UCRule | UCDataRule;
+type UCMDataRule = {
+    command: UCMDataCommandString
+    data: string | string[]
+};
+type UCAnyDataRule = UCDataRule | UCMDataRule
+type UCAnyRule = UCRule | UCAnyDataRule;
 export type UCRuleRecords = Record<string, Array<UCAnyRule>>;
 export type UCCompiledRules = {
     ruleRecords:   UCRuleRecords
@@ -140,16 +156,29 @@ export class UrlCleaner {
         if (isCommand(rule_str)) {
             return {
                 command: rule_str,
-            };
+            } satisfies UCRule;
         } else {
             const i = rule_str.indexOf(":");
             if (i !== -1) {
                 const [command, data] = [rule_str.slice(0, i), rule_str.slice(i + 1)];
                 if (isDataCommand(command)) {
-                    return ({
+                    return {
                         command,
                         data,
-                    });
+                    } satisfies UCDataRule;
+                } else
+                if (isMultiDataCommand(command)) {
+                    const array = data.split(/\s+/);
+                    if (array.length > 1) {
+                        return {
+                            command,
+                            data: array,
+                        } satisfies UCMDataRule;
+                    }
+                    return {
+                        command,
+                        data,
+                    } satisfies UCMDataRule;
                 }
             }
         }
@@ -158,8 +187,9 @@ export class UrlCleaner {
 }
 
 type IRuleApplier =
-      Record<UCDataCommandString, (rule: UCDataRule) => void>
-    & Record<    UCCommandString, (rule: UCRule)     => void>
+      Record<UCDataCommandString,  (rule: UCDataRule)  => void>
+    & Record<UCMDataCommandString, (rule: UCMDataRule) => void>
+    & Record<    UCCommandString,  (rule: UCRule)      => void>
     & {
         nextRule:   () => void
         applyRules: (cleaner: UrlCleaner, url: string, rules: UCAnyRule[]) => string
@@ -218,11 +248,14 @@ class RuleApplier implements IRuleApplier {
         }
         this.nextRule();
     }
-    ["trim-search-params"](rule: UCDataRule) {
+    ["trim-search-params"](rule: UCMDataRule) {
         const u = new URL(this.url);
-        const params = rule.data.split(/\s+/);
-        for (const param of params) {
-            u.searchParams.delete(param);
+        if (Array.isArray(rule.data)) {
+            for (const param of rule.data) {
+                u.searchParams.delete(param);
+            }
+        } else {
+            u.searchParams.delete(rule.data);
         }
         this.url = u.toString();
         this.nextRule();
