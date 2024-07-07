@@ -35,6 +35,11 @@ t({
 });
 
 t({
+    result: isUCRuleStringArray(["trim-search-params:xxx yyy"]),
+    expect: true,
+});
+
+t({
     result: isUCRuleStringArray(["sites:example.com", "trim-start:"]),
     expect: true, // empty data // todo
 });

@@ -60,7 +60,8 @@ export type UCCompiledRules = {
 const ucRuleStringPrefixes = new Set(TypeArray_UCRuleCommands.map(command => `${command}`));
 const ucRuleDataStringPrefixes = [
     "site:", "sites:",
-    ...TypeArray_UCRuleDataCommands.map(command => `${command}:`),
+    ...TypeArray_UCRuleDataCommands.map( command => `${command}:`),
+    ...TypeArray_UCRuleMDataCommands.map(command => `${command}:`),
 ];
 export function isUCRuleStringArray(array: string[]): array is UCRuleStrings {
     return array.every(str => ucRuleStringPrefixes.has(str)
