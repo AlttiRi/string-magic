@@ -1,12 +1,12 @@
 {
-  "name": "string-magic",
-  "version": "0.0.0",
+  "name": "@alttiri/string-magic",
+  "version": "0.1.0-20240707",
   "main": "index.js",
   "type": "module",
   "keywords": ["string", "util", "url", "title", "hostname", "cleaner"],
   "author": "gh.alttiri",
   "license": "MIT",
-  "description": "",
+  "description": "It's not a magic string, it's a string magic. Some util StringRule-driven functions do some string transformations.",
   "scripts": {
 
   },
@@ -16,6 +16,6 @@
   },
   "devDependencies": {
     "@types/node": "20.12.12",
-    "typescript": "5.5.2"
+    "typescript": "5.5.3"
   }
 }
