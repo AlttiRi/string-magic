@@ -29,6 +29,14 @@ const rules_1: TCRuleStrings = [
 
     "site:qwerty.com",     // strict hostname matching, but it will work for `www.qwerty.com` too
       "trim-start:  ☑ ✅ ✔",
+
+
+    "site:regex.org",
+      "trim-regex: on RegEx$",
+    "site:regex.moe",
+      "trim-regex:on RegEx$",
+    "site:regex.co",
+      "trim-regex:\\[\\s+\\d+\\s+]$",
 ];
 
 t({
@@ -70,6 +78,11 @@ const titles_1 = [
     [    "https://qwerty.com/", "✔ Lorem Ipsum"],
     ["https://www.qwerty.com/", "✔ Lorem Ipsum"],
  // ["https://aaa.qwerty.com/", "✔ Lorem Ipsum"],     // will do nothing [expected]
+
+
+    ["https://regex.org/", "Lorem Ipsum on RegEx"],
+    ["https://regex.moe/", "Lorem Ipsum on RegEx"],
+    ["https://regex.co/",  "Lorem Ipsum [  123  ]"],
 ];
 
 const titleCleaner_1 = TitleCleaner.fromRuleStrings(rules_1);

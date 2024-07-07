@@ -14,7 +14,9 @@ const rules_common: TCRuleStrings = [
     "site:x.com",
       "trim-end:: on X",
     "site:*.qwerty.com",
-      "trim-end:|: Lorem 1 | - Qwerty | - Q | "
+      "trim-end:|: Lorem 1 | - Qwerty | - Q | ",
+    "site:regex101.com",
+      "trim-regex:\\(Example\\) \\d+ - ?",
 ];
 const compiled_rules = TitleCleaner.compileRuleStrings(rules_common);
 
@@ -32,8 +34,11 @@ t({
             { "command": "trim-start", "data": ["Twitter", "X"] }
         ],
         "x.com": [
-            { "command": "trim-end", "data": ["on X"] }
-        ]
+            { "command": "trim-end",   "data": ["on X"] }
+        ],
+        "regex101.com": [
+            { "command": "trim-regex", "data": "\\(Example\\) \\d+ - ?" }
+        ],
     }),
 });
 t({
@@ -69,4 +74,11 @@ t({
         "(Example)"
     ),
     expect: "Example",
+});
+t({
+    result: titleCleaner.clean(
+        "https://regex101.com/",
+        "(Example) 123 - RegEx"
+    ),
+    expect: "RegEx",
 });

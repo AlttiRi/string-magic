@@ -10,7 +10,7 @@ const rules_0: TCRuleStrings = [
     "site:pixiv.net",
       "trim-end:: - pixiv",
     "site:deviantart.com",
-      "trim-end:: on DeviantArt",
+      "trim-regex: on DeviantArt$", // "trim-end:: on DeviantArt",
     "site:artstation.com",
       "trim-start:: ArtStation - ",
 ];

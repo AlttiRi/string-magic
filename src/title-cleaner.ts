@@ -1,15 +1,22 @@
 import {getHostname, getParentSubHosts, isPlainObjectEmpty, noWWW} from "./util-hostname";
 
 const TypeArray_TCCommands = [
-    "trim-start", "trim-end",
-    "trim-start-end", // todo "trim-regex",
+    "trim-start",     "trim-end",
+    "trim-start-end",
 ] as const;
-export type TCCommandString = typeof TypeArray_TCCommands[number];
-export type TCRuleString = `${TCCommandString | "sites" | "site"}:${string}`;
+const TypeArray_TCCommands_SD = [ // SingleData
+     "trim-regex",
+] as const;
+export type TCCommandString    = typeof TypeArray_TCCommands[number];
+export type TCCommandString_SD = typeof TypeArray_TCCommands_SD[number];
+export type TCRuleString = `${TCCommandString | TCCommandString_SD | "sites" | "site"}:${string}`;
 export type TCRuleStrings = TCRuleString[];
 export type TCRule = {
     command: TCCommandString
     data: string[]
+} | {
+    command: TCCommandString_SD
+    data: string
 };
 export type TCRuleRecords = Record<string, Array<TCRule>>;
 export type TCCompiledRules = {
@@ -17,14 +24,21 @@ export type TCCompiledRules = {
     ruleRecordsWC: TCRuleRecords | null
 };
 
-const tcRuleStringPrefixes = ["site:", "sites:", ...TypeArray_TCCommands.map(command => `${command}:`)];
+const tcRuleStringPrefixes = ["site:", "sites:",
+    ...TypeArray_TCCommands.map(   command => `${command}:`),
+    ...TypeArray_TCCommands_SD.map(command => `${command}:`),
+];
 export function isTCRuleStringArray(array: string[]): array is TCRuleStrings {
     return array.every(str => tcRuleStringPrefixes.some(prefix => str.startsWith(prefix)));
 }
 
-export const knownCommands = new Set<TCCommandString>(TypeArray_TCCommands) as Set<string>;
+export const knownCommands    = new Set<TCCommandString>(TypeArray_TCCommands)       as Set<string>;
+export const knownCommands_SD = new Set<TCCommandString_SD>(TypeArray_TCCommands_SD) as Set<string>;
 function isCommand(str: string): str is TCCommandString {
     return knownCommands.has(str);
+}
+function isSingleDataCommand(str: string): str is TCCommandString_SD {
+    return knownCommands_SD.has(str);
 }
 
 export class TitleCleaner {
@@ -116,7 +130,7 @@ export class TitleCleaner {
         return newTitle;
     }
 
-    private applyRule(title: string, rule: {command: TCCommandString, data: string[]}): string {
+    private applyRule(title: string, rule: TCRule): string {
         if (rule.command === "trim-start") {
             for (const prefix of rule.data) {
                 if (title.startsWith(prefix)) {
@@ -141,6 +155,13 @@ export class TitleCleaner {
                     .trim();
                 return this.applyRule(newTitle, rule);
             }
+        } else
+        if (rule.command === "trim-regex") {
+            const regex = new RegExp(rule.data);
+            const newTitle = title.replace(regex, "").trim();
+            if (newTitle !== title) {
+                return this.applyRule(newTitle, rule);
+            }
         }
         return title;
     }
@@ -151,30 +172,36 @@ export class TitleCleaner {
             return null;
         }
         const command = rule_str.slice(0, commandEnd);
-        if (!isCommand(command)) {
-            return null;
+        if (isCommand(command)) {
+            let data: string[];
+            const rulePart2 = rule_str.slice(commandEnd + 1);
+            if (rulePart2.charAt(0) === ":") {
+                // one peace //
+                data = [rulePart2.slice(1).trim()];
+            } else if (rulePart2.charAt(1) === ":") {
+                // has a sep char //
+                const sep = rulePart2.charAt(0);
+                data = rulePart2.slice(2).trim().split(new RegExp(`\\s*\\${sep}+\\s*`));
+            } else {
+                // just split by spaces //
+                data = rulePart2.trim().split(/\s+/);
+            }
+            data = data.filter(d => d);
+            if (!data.length) {
+                return null;
+            }
+            return {
+                command,
+                data,
+            };
         }
-
-        let data: string[];
-        const rulePart2 = rule_str.slice(commandEnd + 1);
-        if (rulePart2.charAt(0) === ":") {
-            // one peace //
-            data = [rulePart2.slice(1).trim()];
-        } else if (rulePart2.charAt(1) === ":") {
-            // has a sep char //
-            const sep = rulePart2.charAt(0);
-            data = rulePart2.slice(2).trim().split(new RegExp(`\\s*\\${sep}+\\s*`));
-        } else {
-            // just split by spaces //
-            data = rulePart2.trim().split(/\s+/);
+        if (isSingleDataCommand(command)) {
+            const data = rule_str.slice(commandEnd + 1);
+            return {
+                command,
+                data,
+            };
         }
-        data = data.filter(d => d);
-        if (!data.length) {
-            return null;
-        }
-        return {
-            command,
-            data,
-        };
+        return null;
     }
 }
