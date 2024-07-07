@@ -4,12 +4,14 @@
 
 Some util "StringRule"-driven functions do some string transformations.
 
+I think, this lib will be mostly for my personal use, so the readme is short.
+
 ---
 
 There are two string cleaners — `TitleCleaner` and `UrlCleaner`.
 
 The first one to clean sites' titles from a boilerplate text like `"on Twitter"`,
-the second one to clean URLs (to remove search params and do some other things).
+the second one to clean URLs (to remove search params and do some other things like removing site's redirects).
 
 You describe rules as a string array, then apply them on the string is associated with some URL.
 
@@ -66,3 +68,5 @@ See tests for more examples.
 
 - [TitleCleaner](https://github.com/AlttiRi/string-magic/tree/master/test/title-cleaner)
 - [UrlCleaner](https://github.com/AlttiRi/string-magic/tree/master/test/url-cleaner)
+
+---
