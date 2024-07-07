@@ -159,6 +159,10 @@ tt({
     input:  "https://www.deviantart.com/users/outgoing?https://www.pixiv.net/jump.php?https%3A%2F%2Ftwitter.com%2FSpaceX%2Fstatus%2F1798792222743122164",
     expect: "https://twitter.com/SpaceX/status/1798792222743122164",
 });
+tt({
+    input:  "https://www.deviantart.com/users/outgoing?https://t.umblr.com/redirect?z=https%3A%2F%2Ftwitter.com%2FSpaceX%2Fstatus%2F1798792222743122164",
+    expect: "https://twitter.com/SpaceX/status/1798792222743122164",
+});
 
 // "trim-start:https://www.deviantart.com/users/outgoing?", "recursive",
 // "trim-search-params:fbclid",
