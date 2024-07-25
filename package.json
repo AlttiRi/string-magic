@@ -1,9 +1,7 @@
 {
   "name": "@alttiri/string-magic",
-  "version": "0.1.0-20240707",
+  "version": "0.1.1-20240725",
   "description": "It's not a magic string, it's a string magic. Some util StringRule-driven functions do some string transformations.",
-  "license":  "MIT",
-  "author":   "gh.alttiri",
   "homepage": "https://github.com/AlttiRi/string-magic",
   "keywords": [
     "string",
@@ -13,6 +11,7 @@
     "hostname",
     "cleaner"
   ],
+  "license":  "MIT",
   "type":    "module",
   "main":    "index.js",
   "typings": "index.d.ts",
@@ -34,9 +33,9 @@
     "compile-ts-watch": "tsc --build --watch",
     "clean-ts":         "tsc --build --clean",
     "#": "",
-    "publish-npm":  "npm publish --registry=https://registry.npmjs.org",
-    "publish-ghp":  "npm publish --registry=https://npm.pkg.github.com",
-    "test-publish": "npm pack",
+    "test-publish": "tsc --build && npm pack",
+    "publish-npm":  "tsc --build && npm publish --registry=https://registry.npmjs.org",
+    "publish-ghp":  "tsc --build && npm publish --registry=https://npm.pkg.github.com",
     "##": "",
     "unpublish-npm": "npm unpublish @alttiri/string-magic@0.1.0-20240707 --registry=https://registry.npmjs.org",
     "###": "",
@@ -44,9 +43,9 @@
     "login-ghp": "npm login --registry=https://npm.pkg.github.com"
   },
   "devDependencies": {
-    "@alttiri/util-js":     "1.10.2-20240603",
-    "@alttiri/util-node-js": "2.1.0-20240624",
+    "@alttiri/util-js":     "1.13.1-20240725",
+    "@alttiri/util-node-js": "2.1.1-20240725",
     "@types/node": "20.12.12",
-    "typescript": "5.5.3"
+    "typescript": "5.5.4"
   }
 }
