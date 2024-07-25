@@ -1,6 +1,6 @@
 {
   "name": "@alttiri/string-magic",
-  "version": "0.1.1-20240725",
+  "version": "0.2.0-20240725",
   "description": "It's not a magic string, it's a string magic. Some util StringRule-driven functions do some string transformations.",
   "homepage": "https://github.com/AlttiRi/string-magic",
   "keywords": [
@@ -11,7 +11,7 @@
     "hostname",
     "cleaner"
   ],
-  "license":  "MIT",
+  "license": "MIT",
   "type":    "module",
   "main":    "index.js",
   "typings": "index.d.ts",

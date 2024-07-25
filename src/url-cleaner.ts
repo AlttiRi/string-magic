@@ -1,4 +1,4 @@
-import {getHostname, getParentSubHosts, isPlainObjectEmpty, noWWW} from "./util-hostname";
+import {getHostname, getParentSubHosts, isPlainObjectEmpty, noWWW} from "./util-hostname.js";
 
 const TypeArray_UCRuleCommands = [
     "https",     "decode-url",
