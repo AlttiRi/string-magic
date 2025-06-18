@@ -1,4 +1,4 @@
-# string-magic
+# [string-magic](https://github.com/AlttiRi/string-magic)
 
 ~~ It's not a magic string, it's a string magic. ~~
 
